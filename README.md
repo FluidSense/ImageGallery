@@ -6,7 +6,7 @@ There are many image galleries, but this one is mine.
 git clone
 ```  
 
-Add the Image Gallery to your <head>-tag **_before_** any scripts using it.
+Add the Image Gallery to your `<head>`-tag **_before_** any scripts using it.
 ```HTML
 <script src="[Path-to-imageGallery.js]" />
 ```
