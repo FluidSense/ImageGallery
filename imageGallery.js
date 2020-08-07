@@ -6,11 +6,13 @@ class Gallery {
         if (configPath) {
             // Override all configuration if it can be loaded from an external file.
             // Allows for different config for different deploys.
-            fetch(configPath)
-                .then(response => response.json())
-                .then(configs => Object.assign(this, configs))
+            this.loadExternalConfig(configPath);
         }
     }
+
+    loadExternalConfig = (configPath) => fetch(configPath)
+                .then(response => response.json())
+                .then(configs => Object.assign(this, configs))
     
     imgSrcDeconstructor = (src) => {
         const srcWordArray = src.split('/');
