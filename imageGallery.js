@@ -1,8 +1,9 @@
 class Gallery {
     constructor(parameters) {
-        const {basePath, debug, include = [], configPath} = parameters;
+        const {basePath, debug, include = [''], configPath} = parameters;
         this.basePath = basePath ? basePath : 'img';
         this.debug = Boolean(debug);
+        this.include = include;
         if (configPath) {
             // Override all configuration if it can be loaded from an external file.
             // Allows for different config for different deploys.
@@ -95,12 +96,12 @@ class Gallery {
     getJsons = async () => {
         const images = {};
         const folders = this.include;
-        folders.forEach(folder => {
+        folders.forEach(async (folder) =>  {
             await fetch(`${this.basePath}${folder}/images.json`)
                 .then(response => response.json())
                 .then(
                     data => {images[folder] = data}, 
-                    error => this.log('Gallery: Failed to construct json of image data',error, 'error')
+                    error => this.log('Gallery: Failed to construct json of image data -',error, 'error')
                     );
         });
         if(Object.keys(images).length < 1) this.log(`Gallery: Failed to read image jsons for ${this.basePath}${folders}.`, 'error');
