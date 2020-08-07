@@ -8,6 +8,7 @@ class Gallery {
             // Allows for different config for different deploys.
             this.loadExternalConfig(configPath);
         }
+        this.slideShow = $("#current-image-container").find("img")[0];
     }
 
     loadExternalConfig = (configPath) => fetch(configPath)
@@ -28,7 +29,7 @@ class Gallery {
     createThumbs = (files) => {
         const images = Object.values(files);
         this.log("Gallery: Initiated with files - ", files);
-        slideShow.src= `${this.imgSrcConstructor(images[0].name)}`;
+        this.slideShow.src= `${this.imgSrcConstructor(images[0].name)}`;
         for (const index in images) {
             const img = document.createElement("img");
             const image = images[index];
@@ -38,40 +39,43 @@ class Gallery {
             img.setAttribute("prev",image.prevImg);
             $("#thumbs-container").append(img)
             img.onclick = () => {
-                slideShow.src = `${this.imgSrcConstructor(this.imgSrcDeconstructor(img.src))}`;
+                this.slideShow.src = `${this.imgSrcConstructor(this.imgSrcDeconstructor(img.src))}`;
             }
         }
     }
 
     log = (args) => {
-        const type = args[args.length -1];
+        const type = args.pop();
         if (this.debug) {
-            if (type === 'error') console.error(...args);
-            else console.log(...args);
+            if (type === 'error') {
+                if (args.length > 1) console.error(...args);
+                console.error(args);
+            }
+            else if(args.length > 1) console.log(...args, type);
+            else console.log(type);
         }
     }
 
     createGallery = () => {
-        const slideShow = $("#current-image-container").find("img")[0];
         this.getJsons().then(files => this.createThumbs(files), error => this.log(error, 'error'));
         $("#nav-left").click(function(){
-            const currImageSrc = slideShow.src;
+            const currImageSrc = this.slideShow.src;
             const relativeUrl = this.imgSrcConstructor(imgSrcDeconstructor(currImageSrc), 64);
             const currThumb = this.getCurrentImageFromThumbs(relativeUrl);
             const prevImg = currThumb.getAttribute('prev')
             if (prevImg.trim()) {
                 const prevImageSrc = this.imgSrcConstructor(prevImg);
-                slideShow.src = `${prevImageSrc}`;
+                this.slideShow.src = `${prevImageSrc}`;
             }
         });
         $("#nav-right").click(function(){
-            const currImageSrc = slideShow.src;
+            const currImageSrc = this.slideShow.src;
             const relativeUrl = imgSrcConstructor(imgSrcDeconstructor(currImageSrc), 64);
             const currThumb = getCurrentImageFromThumbs(relativeUrl);
             const nextImg = currThumb.getAttribute('next');
             if (nextImg.trim()) {
                 const nextImageSrc = imgSrcConstructor(nextImg);
-                slideShow.src = `${nextImageSrc}`;
+                this.slideShow.src = `${nextImageSrc}`;
             }
         });
     }
