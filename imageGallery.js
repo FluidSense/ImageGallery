@@ -95,15 +95,15 @@ class Gallery {
     getJsons = async () => {
         const images = {};
         const folders = this.include;
-        for (const index in folders) {
-            await fetch(`${this.basePath}${folders[index]}/images.json`)
+        folders.forEach(folder => {
+            await fetch(`${this.basePath}${folder}/images.json`)
                 .then(response => response.json())
                 .then(
-                    data => {images[folders[index]] = data}, 
+                    data => {images[folder] = data}, 
                     error => this.log('Gallery: Failed to construct json of image data',error, 'error')
                     );
-        }
-        if(Object.keys(images).length < 1) this.log('Gallery: Failed to read image jsons.', 'error');
+        });
+        if(Object.keys(images).length < 1) this.log(`Gallery: Failed to read image jsons for ${this.basePath}${folders}.`, 'error');
         else this.log('Gallery: Read image jsons as - ',images)
         return images;
     }
