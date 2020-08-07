@@ -38,16 +38,18 @@ class Gallery {
         this.slideShow.src= `${this.imgSrcConstructor(firstImage.name)}`;
         folders.forEach(folder => {
             const images = Object.values(folder);
-            const img = document.createElement("img");
-            const image = images[index];
-            img.src = this.imgSrcConstructor(image.name, 64);
-            img.className = 'thumb';
-            img.setAttribute("next",image.nextImg);
-            img.setAttribute("prev",image.prevImg);
-            $("#thumbs-container").append(img)
-            img.onclick = () => {
-                this.slideShow.src = `${this.imgSrcConstructor(this.imgSrcDeconstructor(img.src))}`;
-            }
+            images.forEach(image => {
+                const img = document.createElement("img");
+                const image = images[index];
+                img.src = this.imgSrcConstructor(image.name, 64);
+                img.className = 'thumb';
+                img.setAttribute("next",image.nextImg);
+                img.setAttribute("prev",image.prevImg);
+                $("#thumbs-container").append(img)
+                img.onclick = () => {
+                    this.slideShow.src = `${this.imgSrcConstructor(this.imgSrcDeconstructor(img.src))}`;
+                }
+            });
         })
     }
 
