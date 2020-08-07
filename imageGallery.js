@@ -45,15 +45,18 @@ class Gallery {
     }
 
     log = (args) => {
-        const type = args.pop();
-        if (this.debug) {
+        if (!this.debug) return;
+        const isMultiprint = typeof args !== "string";
+        const types = ['error', 'warning']
+        const hasType = isMultiprint ? args.some(val => types.includes(val)) : false;
+        if(hasType) {
             if (type === 'error') {
-                if (args.length > 1) console.error(...args);
+                if (isMultiprint) console.error(...args);
                 console.error(args);
             }
-            else if(args.length > 1) console.log(...args, type);
-            else console.log(type);
         }
+        else if(isMultiprint) console.log(...args);
+        else console.log(type);
     }
 
     createGallery = () => {
