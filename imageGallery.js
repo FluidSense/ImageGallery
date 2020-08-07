@@ -28,7 +28,11 @@ class Gallery {
     
     createThumbs = (files) => {
         const images = Object.values(files);
-        this.log("Gallery: Initiated with files - ", files);
+        if(images.length < 1) {
+            this.log('Gallery: Fatal error - No images found', 'error');
+            return;
+        }
+        this.log("Gallery: Initiated with images - ", files);
         this.slideShow.src= `${this.imgSrcConstructor(images[0].name)}`;
         for (const index in images) {
             const img = document.createElement("img");
@@ -44,19 +48,20 @@ class Gallery {
         }
     }
 
-    log = (args) => {
+    log = (...args) => {
         if (!this.debug) return;
-        const isMultiprint = typeof args !== "string";
+        const isMultiprint = Array.isArray(args);
         const types = ['error', 'warning']
         const hasType = isMultiprint ? args.some(val => types.includes(val)) : false;
         if(hasType) {
+            const type = args.pop();
             if (type === 'error') {
                 if (isMultiprint) console.error(...args);
-                console.error(args);
+                else console.error(args);
             }
         }
         else if(isMultiprint) console.log(...args);
-        else console.log(type);
+        else console.log(args);
     }
 
     createGallery = () => {
@@ -98,7 +103,8 @@ class Gallery {
                     error => this.log('Gallery: Failed to construct json of image data',error, 'error')
                     );
         }
-        this.log('Gallery: Created jsons - ',images)
+        if(Object.keys(images).length < 1) this.log('Gallery: Failed to read image jsons.', 'error');
+        else this.log('Gallery: Read image jsons as - ',images)
         return images;
     }
 }
