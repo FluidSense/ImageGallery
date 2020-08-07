@@ -40,7 +40,6 @@ class Gallery {
             const images = Object.values(folder);
             images.forEach(image => {
                 const img = document.createElement("img");
-                const image = images[index];
                 img.src = this.imgSrcConstructor(image.name, 64);
                 img.className = 'thumb';
                 img.setAttribute("next",image.nextImg);
