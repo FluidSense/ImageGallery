@@ -28,14 +28,15 @@ class Gallery {
     };
     
     createThumbs = (files) => {
-        const images = Object.values(files);
-        if(images.length < 1) {
+        const folders = Object.values(files);
+        if(folders.length < 1) {
             this.log('Gallery: Fatal error - No images found', 'error');
             return;
         }
-        this.log("Gallery: Initiated with images - ", files);
-        this.slideShow.src= `${this.imgSrcConstructor(images[0].name)}`;
-        for (const index in images) {
+        this.log("Gallery: Initiated with images & folders - ", files);
+        this.slideShow.src= `${this.imgSrcConstructor(images[0][0].name)}`;
+        folders.forEach(folder => {
+            const images = Object.values(folder);
             const img = document.createElement("img");
             const image = images[index];
             img.src = this.imgSrcConstructor(image.name, 64);
@@ -46,7 +47,7 @@ class Gallery {
             img.onclick = () => {
                 this.slideShow.src = `${this.imgSrcConstructor(this.imgSrcDeconstructor(img.src))}`;
             }
-        }
+        })
     }
 
     log = (...args) => {
@@ -69,7 +70,7 @@ class Gallery {
         this.getJsons().then(files => this.createThumbs(files), error => this.log(error, 'error'));
         $("#nav-left").click(function(){
             const currImageSrc = this.slideShow.src;
-            const relativeUrl = this.imgSrcConstructor(imgSrcDeconstructor(currImageSrc), 64);
+            const relativeUrl = this.imgSrcConstructor(this.imgSrcDeconstructor(currImageSrc), 64);
             const currThumb = this.getCurrentImageFromThumbs(relativeUrl);
             const prevImg = currThumb.getAttribute('prev')
             if (prevImg.trim()) {
@@ -79,11 +80,11 @@ class Gallery {
         });
         $("#nav-right").click(function(){
             const currImageSrc = this.slideShow.src;
-            const relativeUrl = imgSrcConstructor(imgSrcDeconstructor(currImageSrc), 64);
-            const currThumb = getCurrentImageFromThumbs(relativeUrl);
+            const relativeUrl = this.imgSrcConstructor(imgSrcDeconstructor(currImageSrc), 64);
+            const currThumb = this.getCurrentImageFromThumbs(relativeUrl);
             const nextImg = currThumb.getAttribute('next');
             if (nextImg.trim()) {
-                const nextImageSrc = imgSrcConstructor(nextImg);
+                const nextImageSrc = this.imgSrcConstructor(nextImg);
                 this.slideShow.src = `${nextImageSrc}`;
             }
         });
