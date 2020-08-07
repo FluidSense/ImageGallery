@@ -34,7 +34,8 @@ class Gallery {
             return;
         }
         this.log("Gallery: Initiated with images & folders - ", files);
-        this.slideShow.src= `${this.imgSrcConstructor(folders[0][0].name)}`;
+        const firstImage = Object.values(folders[0])[0];
+        this.slideShow.src= `${this.imgSrcConstructor(firstImage.name)}`;
         folders.forEach(folder => {
             const images = Object.values(folder);
             const img = document.createElement("img");
