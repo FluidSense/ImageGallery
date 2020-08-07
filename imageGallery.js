@@ -100,7 +100,7 @@ class Gallery {
             await fetch(`${this.basePath}${folder}/images.json`)
                 .then(response => response.json())
                 .then(
-                    data => {images[folder] = data}, 
+                    data => images[folder] = data, 
                     error => this.log('Gallery: Failed to construct json of image data -',error, 'error')
                     );
         });
