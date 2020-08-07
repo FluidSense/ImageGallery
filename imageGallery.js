@@ -96,7 +96,7 @@ class Gallery {
     getJsons = async () => {
         const images = {};
         const folders = this.include;
-        folders.forEach(async (folder) =>  {
+        await folders.forEach(async (folder) =>  {
             await fetch(`${this.basePath}${folder}/images.json`)
                 .then(response => response.json())
                 .then(
