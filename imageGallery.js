@@ -27,8 +27,9 @@ class Gallery {
     
     imgNameFromSrc = (src) => {
         const srcWordArray = src.split('/');
-        const removeLingering = srcWordArray[srcWordArray.length -1].split('"');
-        return removeLingering[0];
+        const removedPath = srcWordArray[srcWordArray.length -1].split('"')[0];
+        const withoutQuery = removedPath.split("?")[0];
+        return withoutQuery;
     }
 
     convertSrcToCasing = (imgUrl) => {
@@ -44,7 +45,6 @@ class Gallery {
 
     imgSrcConstructor = (imgUrlOrigin, size = 1280) => {
         const imgUrl = this.convertSrcToCasing(imgUrlOrigin);
-        console.log('Gallery: ',this.sizeFormat, 'is', typeof this.sizeFormat);
         this.log("Gallery: Creating source for main image -",imgUrl);
         // Either add the deciding size in path before img name, or use a query for API's.
         if (this.sizeFormat === 'inPath') return `${this.basePath}/${size}/${imgUrl}`;
