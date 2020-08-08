@@ -1,9 +1,16 @@
 class Gallery {
     constructor(parameters) {
-        const {basePath, debug, include = [''], configPath} = parameters;
+        const { 
+            basePath,
+            casing = 'original',
+            configPath,
+            debug,
+            include = [''],
+        } = parameters;
         this.basePath = basePath ? basePath : 'img';
         this.debug = Boolean(debug);
         this.include = include;
+        this.casing = casing;
         if (configPath) {
             // Override all configuration if it can be loaded from an external file.
             // Allows for different config for different deploys.
@@ -16,15 +23,38 @@ class Gallery {
                 .then(response => response.json())
                 .then(configs => Object.assign(this, configs))
     
-    imgSrcDeconstructor = (src) => {
+    imgNameFromSrc = (src) => {
         const srcWordArray = src.split('/');
         const removeLingering = srcWordArray[srcWordArray.length -1].split('"');
         return removeLingering[0];
     }
 
-    imgSrcConstructor = (imgUrl, size = 1280) => {
+    convertSrcToCasing = (imgUrl) => {
+        switch (this.casing) {
+            case 'original':
+                return imgUrl;
+            case 'lower':
+                return imgUrl.toLowerCase();
+            case 'upper':
+                return imgUrl.toUpperCase();
+        }
+    }
+
+    imgSrcConstructor = (imgUrlOrigin, size = 1280) => {
+        const imgUrl = this.convertSrcToCasing(imgUrlOrigin);
         this.log("Gallery: Creating source for main image -",imgUrl);
-        return `${this.basePath}/${size}/${imgUrl}`;
+        // Either add the deciding size in path before img name, or use a query for API's.
+        if (this.sizeFormat === 'inPath') return `${this.basePath}/${size}/${imgUrl}`;
+        
+        // Append any URL-params for API's.
+        if (typeof this.sizeFormat === 'object') {
+            const { width, height, ...rest } = this.sizeFormat; 
+            const params = Object.entries(rest).reduce((acc, [key, value]) => `${acc}${key}=${value}&`, '');
+            const sizeKey = width ? width : height; 
+            return `${this.basePath}/${imgUrl}?${params}${sizeKey}=${size}`;
+        }
+        // Default case: No sizes, all image sizes are final.
+        return `${this.basePath}/${imgUrl}`;
     };
     
     createThumbs = (files) => {
@@ -46,7 +76,7 @@ class Gallery {
                 img.setAttribute("prev",image.prevImg);
                 $("#thumbs-container").append(img)
                 img.onclick = () => {
-                    this.slideShow.src = `${this.imgSrcConstructor(this.imgSrcDeconstructor(img.src))}`;
+                    this.slideShow.src = `${this.imgSrcConstructor(this.imgNameFromSrc(img.src))}`;
                 }
             });
         })
@@ -72,7 +102,7 @@ class Gallery {
         this.getJsons().then(files => this.createThumbs(files), error => this.log(error, 'error'));
         $("#nav-left").click(function(){
             const currImageSrc = this.slideShow.src;
-            const relativeUrl = this.imgSrcConstructor(this.imgSrcDeconstructor(currImageSrc), 64);
+            const relativeUrl = this.imgSrcConstructor(this.imgNameFromSrc(currImageSrc), 64);
             const currThumb = this.getCurrentImageFromThumbs(relativeUrl);
             const prevImg = currThumb.getAttribute('prev')
             if (prevImg.trim()) {
@@ -82,7 +112,7 @@ class Gallery {
         });
         $("#nav-right").click(function(){
             const currImageSrc = this.slideShow.src;
-            const relativeUrl = this.imgSrcConstructor(imgSrcDeconstructor(currImageSrc), 64);
+            const relativeUrl = this.imgSrcConstructor(imgNameFromSrc(currImageSrc), 64);
             const currThumb = this.getCurrentImageFromThumbs(relativeUrl);
             const nextImg = currThumb.getAttribute('next');
             if (nextImg.trim()) {
@@ -113,6 +143,12 @@ class Gallery {
         if(Object.keys(images).length < 1) this.log(`Gallery: Failed to read image jsons for ${this.basePath}${folders}.`, 'error');
         else this.log('Gallery: Read image jsons as - ',images)
         return images;
+    }
+}
+
+class Thumb {
+    constructor(){
+        img = document.createElement("img");
     }
 }
 
