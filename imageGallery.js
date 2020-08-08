@@ -133,7 +133,7 @@ class Gallery {
         const images = {};
         const folders = this.include;
         const fetches = folders.map((folder) =>  {
-            fetch(`${this.basePath}${folder}/images.json`)
+            return fetch(`${this.basePath}${folder}/images.json`)
                 .then(response => response.json())
                 .then(
                     data => {
