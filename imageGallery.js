@@ -6,11 +6,13 @@ class Gallery {
             configPath,
             debug,
             include = [''],
+            sizeFormat
         } = parameters;
         this.basePath = basePath ? basePath : 'img';
         this.debug = Boolean(debug);
         this.include = include;
         this.casing = casing;
+        this.sizeFormat = sizeFormat;
         if (configPath) {
             // Override all configuration if it can be loaded from an external file.
             // Allows for different config for different deploys.
