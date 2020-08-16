@@ -8,17 +8,19 @@ class Gallery {
             include = [''],
             sizeFormat
         } = parameters;
+
         this.basePath = basePath ? basePath : 'img';
         this.debug = Boolean(debug);
         this.include = include;
         this.casing = casing;
         this.sizeFormat = sizeFormat;
+        this.slideShow = document.querySelector("#current-image-container img");
+
         if (configPath) {
             // Override all configuration if it can be loaded from an external file.
             // Allows for different config for different deploys.
             this.loadExternalConfig(configPath);
         }
-        this.slideShow = $("#current-image-container").find("img")[0];
     }
 
     loadExternalConfig = (configPath) => fetch(configPath)
@@ -71,18 +73,17 @@ class Gallery {
         this.slideShow.src= `${this.imgSrcConstructor(firstImage.name)}`;
         folders.forEach(folder => {
             const images = Object.values(folder);
-            images.forEach(image => {
-                const img = document.createElement("img");
-                img.src = this.imgSrcConstructor(image.name, 64);
-                img.className = 'thumb';
-                img.setAttribute("next",image.nextImg);
-                img.setAttribute("prev",image.prevImg);
-                $("#thumbs-container").append(img)
-                img.onclick = () => {
-                    this.slideShow.src = `${this.imgSrcConstructor(this.imgNameFromSrc(img.src))}`;
-                }
+            const thumbs = images.map(image => {
+                new Thumb(image, this.imgSrcConstructor);
             });
+            return thumbs;
         })
+        return new ThumbsContainer(allThumbs);
+    }
+
+    setInitialImage = (thumbContainer) => {
+        const firstImage = thumbContainer.getInitialImage();
+        this.slideShow.src=`${this.imgSrcConstructor(firstImage.name)}`;
     }
 
     log = (...args) => {
@@ -102,31 +103,33 @@ class Gallery {
     }
 
     createGallery = () => {
-        this.getJsons().then(files => this.createThumbs(files), error => this.log(error, 'error'));
-        $("#nav-left").click(function(){
+        this.getJsons()
+            .then(
+                files => this.createThumbs(files),
+                error => this.log(error, 'error')
+            )
+            .then(thumbContainer => this.setInitialImage(thumbContainer));
+
+        document.getElementById("nav-left").onclick = () => {
             const currImageSrc = this.slideShow.src;
-            const relativeUrl = this.imgSrcConstructor(this.imgNameFromSrc(currImageSrc), 64);
+            const relativeUrl = this.imgSrcConstructor(this.getImgNameFromSrc(currImageSrc), 64);
             const currThumb = this.getCurrentImageFromThumbs(relativeUrl);
-            const prevImg = currThumb.getAttribute('prev')
+            const prevImg = currThumb.getAttribute('data-prev')
             if (prevImg.trim()) {
                 const prevImageSrc = this.imgSrcConstructor(prevImg);
                 this.slideShow.src = `${prevImageSrc}`;
             }
-        });
-        $("#nav-right").click(function(){
+        };
+        document.getElementById("#nav-right").onclick = () => {
             const currImageSrc = this.slideShow.src;
-            const relativeUrl = this.imgSrcConstructor(imgNameFromSrc(currImageSrc), 64);
+            const relativeUrl = this.imgSrcConstructor(getImgNameFromSrc(currImageSrc), 64);
             const currThumb = this.getCurrentImageFromThumbs(relativeUrl);
-            const nextImg = currThumb.getAttribute('next');
+            const nextImg = currThumb.getAttribute('data-next');
             if (nextImg.trim()) {
                 const nextImageSrc = this.imgSrcConstructor(nextImg);
                 this.slideShow.src = `${nextImageSrc}`;
             }
-        });
-    }
-
-    getCurrentImageFromThumbs = (currentImageSrc) => {
-        return $('#thumbs-container').children(`img[src='${currentImageSrc}']`)[0];
+        };
     }
 
     getJsons = async () => {
@@ -150,9 +153,53 @@ class Gallery {
     }
 }
 
+class ThumbsContainer {
+    thumbs = [];
+
+    constructor(thumbs, containerName) {
+        this.element = this.getDOMContainer(containerName);
+        this.thumbs = thumbs;
+        thumbs.forEach(thumb => this.element.appendChild(thumb.element));
+    }
+    
+    getInitialImage = () => {
+        return this.thumbs[0];
+    }
+
+    getDOMContainer = (containerName) => {
+        if (containerName) {
+            return document.getElementById(containerName);
+        }
+        return document.getElementById('thumbs-container');
+    }
+
+    getThumbForCurrentImage = (currentImageSrc) => {
+        return document.querySelector(`div.thumbs-container img[src=${currentImageSrc}]`)
+    }
+
+    getImgNameFromSrc = (src) => {
+        const srcWordArray = src.split('/');
+        const removedPath = srcWordArray[srcWordArray.length -1].split('"')[0];
+        const withoutQuery = removedPath.split("?")[0];
+        return withoutQuery;
+    }
+}
+
 class Thumb {
-    constructor(){
+    constructor(image, pathConstructor){
         img = document.createElement("img");
+        this.element = img;
+        this.pathConstructor = pathConstructor;
+        img.src = this.pathConstructor(image.name, 64);
+        img.className = 'thumb';
+        img.setAttribute("data-next",image.nextImg);
+        img.setAttribute("data-prev",image.prevImg);
+    }
+
+    setOnClick = (slideShow) => {
+        this.element.onclick = () => {
+            slideShow.src = `${this.pathConstructor(this.getImgNameFromSrc(img.src))}`;
+        }
     }
 }
 
