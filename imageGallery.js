@@ -27,12 +27,6 @@ class Gallery {
                 .then(response => response.json())
                 .then(configs => Object.assign(this, configs))
     
-    imgNameFromSrc = (src) => {
-        const srcWordArray = src.split('/');
-        const removedPath = srcWordArray[srcWordArray.length -1].split('"')[0];
-        const withoutQuery = removedPath.split("?")[0];
-        return withoutQuery;
-    }
 
     convertSrcToCasing = (imgUrl) => {
         switch (this.casing) {
@@ -61,20 +55,28 @@ class Gallery {
         // Default case: No sizes, all image sizes are final.
         return `${this.basePath}/${imgUrl}`;
     };
+
+    getImgNameFromSrc = (src) => {
+        const srcWordArray = src.split('/');
+        const removedPath = srcWordArray[srcWordArray.length -1].split('"')[0];
+        const withoutQuery = removedPath.split("?")[0];
+        return withoutQuery;
+    }
     
     createThumbs = (files) => {
         const folders = Object.values(files);
+        // A folder structure is enforced in the JSON, and if not, created in an earlier step.
         if(folders.length < 1) {
             this.log('Gallery: Fatal error - No images found', 'error');
             return;
         }
         this.log("Gallery: Initiated with images & folders - ", files);
-        const firstImage = Object.values(folders[0])[0];
-        this.slideShow.src= `${this.imgSrcConstructor(firstImage.name)}`;
-        folders.forEach(folder => {
+        const allThumbs = folders.map(folder => {
             const images = Object.values(folder);
             const thumbs = images.map(image => {
-                new Thumb(image, this.imgSrcConstructor);
+                const thumb = new Thumb(image, this.imgSrcConstructor, this.getImgNameFromSrc);
+                thumb.setOnClick(this.slideShow);
+                return thumb;
             });
             return thumbs;
         })
@@ -87,6 +89,7 @@ class Gallery {
     }
 
     log = (...args) => {
+        // A wrapper around console.error and console.warn.
         if (!this.debug) return;
         const isMultiprint = Array.isArray(args);
         const types = ['error', 'warning']
@@ -102,6 +105,17 @@ class Gallery {
         else console.log(args);
     }
 
+    navigation = (attributeName) => {
+        const currImageSrc = this.slideShow.src;
+        const relativeUrl = this.imgSrcConstructor(this.getImgNameFromSrc(currImageSrc), 64);
+        const currThumb = this.getCurrentImageFromThumbs(relativeUrl);
+        const upcomingImg = currThumb.getAttribute(attributeName)
+        if (upcomingImg.trim()) {
+            const upcomingImageSrc = this.imgSrcConstructor(upcomingImg);
+            this.slideShow.src = `${upcomingImageSrc}`;
+        }
+    } 
+
     createGallery = () => {
         this.getJsons()
             .then(
@@ -110,26 +124,9 @@ class Gallery {
             )
             .then(thumbContainer => this.setInitialImage(thumbContainer));
 
-        document.getElementById("nav-left").onclick = () => {
-            const currImageSrc = this.slideShow.src;
-            const relativeUrl = this.imgSrcConstructor(this.getImgNameFromSrc(currImageSrc), 64);
-            const currThumb = this.getCurrentImageFromThumbs(relativeUrl);
-            const prevImg = currThumb.getAttribute('data-prev')
-            if (prevImg.trim()) {
-                const prevImageSrc = this.imgSrcConstructor(prevImg);
-                this.slideShow.src = `${prevImageSrc}`;
-            }
-        };
-        document.getElementById("#nav-right").onclick = () => {
-            const currImageSrc = this.slideShow.src;
-            const relativeUrl = this.imgSrcConstructor(getImgNameFromSrc(currImageSrc), 64);
-            const currThumb = this.getCurrentImageFromThumbs(relativeUrl);
-            const nextImg = currThumb.getAttribute('data-next');
-            if (nextImg.trim()) {
-                const nextImageSrc = this.imgSrcConstructor(nextImg);
-                this.slideShow.src = `${nextImageSrc}`;
-            }
-        };
+        // Initiate next and prev-buttons from navigation template function.
+        document.getElementById("nav-left").onclick = () => this.navigation('data-prev')
+        document.getElementById("nav-right").onclick = () => this.navigation('data-next');
     }
 
     getJsons = async () => {
@@ -177,19 +174,14 @@ class ThumbsContainer {
         return document.querySelector(`div.thumbs-container img[src=${currentImageSrc}]`)
     }
 
-    getImgNameFromSrc = (src) => {
-        const srcWordArray = src.split('/');
-        const removedPath = srcWordArray[srcWordArray.length -1].split('"')[0];
-        const withoutQuery = removedPath.split("?")[0];
-        return withoutQuery;
-    }
 }
 
 class Thumb {
-    constructor(image, pathConstructor){
+    constructor(image, pathConstructor, imgNameFromPath){
         img = document.createElement("img");
         this.element = img;
         this.pathConstructor = pathConstructor;
+        this.imgNameFromPath = imgNameFromPath;
         img.src = this.pathConstructor(image.name, 64);
         img.className = 'thumb';
         img.setAttribute("data-next",image.nextImg);
@@ -198,7 +190,7 @@ class Thumb {
 
     setOnClick = (slideShow) => {
         this.element.onclick = () => {
-            slideShow.src = `${this.pathConstructor(this.getImgNameFromSrc(img.src))}`;
+            slideShow.src = `${this.pathConstructor(this.imgNameFromPath(img.src))}`;
         }
     }
 }
